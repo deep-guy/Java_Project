@@ -7,7 +7,7 @@ import java.util.ArrayList;
 
 public class FlockY extends Flock
 {
-    private ArrayList<Bird> birds = new ArrayList();
+    private ArrayList<Bird> birds = new ArrayList<Bird>(0);
     Bird leader = null;
 
     public void addBird(Bird brd) 
@@ -18,7 +18,8 @@ public class FlockY extends Flock
 
     public void setLeader(Bird lead) 
     {
-        if (leader != null) {
+        if (leader != null) 
+        {
             leader.retireLead();
         }
         leader = lead;
@@ -38,20 +39,27 @@ public class FlockY extends Flock
     public Flock split(int pos) 
     {
         FlockY newFlock = new FlockY();
-        Bird newLeader = birds.get(pos);
-        newFlock.addBird(newLeader);
-        birds.remove(pos);
-        int size = birds.size();
-
-        for (int i = 0; i < size; i+=2)
+        for (int i = pos; i < birds.size(); i++)
         {
-            Bird temp =  birds.get(i);
-            newFlock.addBird(temp);
+            birds.get(i).setFlock(newFlock);
+            newFlock.addBird(birds.get(i));
             birds.remove(i);
         }
 
-        newLeader.setTarget(800, 600);
-        newFlock.setLeader(newLeader);
+        newFlock.setLeader(newFlock.getBirds().get(0));
+        // System.out.println(newFlock.getLeader().getName() + "+++++++");
+        int xtarget, ytarget = 0;
+        xtarget = getLeader().getPos().getX();
+        ytarget = getLeader().getPos().getY();
+        if (xtarget + 100 < 1000)
+            xtarget = xtarget + 100;
+        else
+            xtarget = 999;
+        if (ytarget + 100 < 1000)
+            ytarget = ytarget + 100;
+        else
+            ytarget = 999;
+        newFlock.getLeader().setTarget(xtarget, ytarget);
         return newFlock;
     }
 
@@ -59,16 +67,9 @@ public class FlockY extends Flock
     {
         for (int i = 0; i < birds.size(); i++)
         {
-            Bird temp = birds.get(i);
-            // if (temp.isLeader())
-            // {
-            //     temp.retireLead();
-            // }
-            birds.remove(i);
-            f.addBird(temp);
+            birds.get(i).retireLead();
+            birds.get(i).setFlock(f);
+            f.getBirds().add(this.getBirds().get(i));
         }
-        this.leader = f.getLeader();
-        this.birds = f.getBirds();
-        f = null;
     }
 }

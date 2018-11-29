@@ -8,13 +8,16 @@ import java.lang.Math;
 
 public class BirdX extends Bird
 {
-    private double birdSpeed = 9;
+    private double birdSpeed = Bird.getMaxSpeed();
     private boolean isLeader;
 
 
     public String getName()
     {
-        return "1";
+        if (isLeader)
+            return "Leader_IMT2017013";
+        else
+            return "Bird_IMT2017013";
     }
 
     public double getSpeed()
@@ -32,44 +35,80 @@ public class BirdX extends Bird
         return isLeader;
     }
 
+    public void controlSpeed()
+    {
+        Bird leader = this.getFlock().getLeader();
+        int leaderposx = leader.getPos().getX();
+        int leaderposy = leader.getPos().getY();
+        if ((this.getPos().getX() < leaderposx + 75 && this.getPos().getX() > leaderposx - 75) 
+        || (this.getPos().getY() < leaderposy + 75 && this.getPos().getY() > leaderposy - 75))  
+            {this.setSpeed(Bird.getMaxSpeed());}
+        else    
+            this.setSpeed(Bird.getMaxSpeed() + 10);                    
+    }
+
     protected void updatePos()
     {
-        double dx;
-        double dy;
+        controlSpeed();
+        double change_x = 0;
+        double change_y = 0;
         Position currPos = this.getPos();
         int x = currPos.getX();
         int y = currPos.getY();
-        if (!this.isLeader) {
-            Position lpos = this.getFlock().getLeader().getPos();
-            this.setTarget(lpos.getX(), lpos.getY());
+        if (this.isLeader == false)   
+        {
+            Position lpos = getFlock().getLeader().getPos();
+            setTarget(lpos.getX(), lpos.getY());
         }
-        int xt = this.getTarget().getX();
-        int yt = this.getTarget().getY();
-        if (xt == x && yt == y) {
-            dx = 0.0;
-            dy = 0.0;
-        } else if (xt == x) {
-            dy = yt > y ? 1.0 : -1.0;
-            dx = 0.0;
-        } else if (yt == y) {
-            dx = xt > x ? 1.0 : -1.0;
-            dy = 0.0;
-        } else {
-            double m = (float)(yt - y) / (float)(xt - x);
-            System.out.println(String.valueOf(xt) + "," + yt + "  " + (Object)currPos + " m = " + m);
-            dx = xt > x ? 1.0 : -1.0;
-            dy = m * (dx *= this.getSpeed());
+        int x_target = this.getTarget().getX();
+        int y_target = this.getTarget().getY();
+        if (x_target == x && y_target == y) 
+        {
+            change_x = 0;
+            change_y = 0;
+            setPos(x, y);
+        } 
+        else if (x_target == x) 
+        {
+            change_x = 0;
+            if (y_target > y)
+                change_y = birdSpeed;
+            else
+                change_y = -birdSpeed;
+        } 
+        else if (y_target == y) 
+        {
+            change_y = 0.0;
+            if (x_target > x)
+                change_x = birdSpeed;
+            else
+                change_x = -birdSpeed;
+        } 
+        else 
+        {
+            //Calculating the slope of the straight line joining the points
+            double slope = (float)(y_target - y) / (float)(x_target - x);
+            if (x_target > x)
+                change_x = birdSpeed;
+            else
+                change_x = -birdSpeed;
+
+            change_y = (slope * change_x);
+            if (change_y > 5)
+                change_y = 5;
+            else if (change_y < (-5))
+                change_y = -5;
         }
         
 
         for (int i = 0; i < this.getFlock().getBirds().size(); i++)
         {
-            int tempx = 0, tempy = 0;
-            tempx = this.getFlock().getBirds().get(i).getPos().getX();
-            tempy = this.getFlock().getBirds().get(i).getPos().getY();            
-            if (x + (int)dx >= tempx - 7 && x + (int)dx <= tempx + 7)
+            int temp_x = 0, temp_y = 0;
+            temp_x = this.getFlock().getBirds().get(i).getPos().getX();
+            temp_y = this.getFlock().getBirds().get(i).getPos().getY();            
+            if (x + (int)change_x >= temp_x - 7 && x + (int)change_x <= temp_x + 7)
             {
-                if (y + (int)dy >= tempy - 7 && y + (int)dy <= tempy + 7)
+                if (y + (int)change_y >= temp_y - 7 && y + (int)change_y <= temp_y + 7)
                 {
                     if (this.isLeader())
                     {
@@ -77,15 +116,14 @@ public class BirdX extends Bird
                     }
                     else
                     {
-                        dx = 0;
-                        dy = 0;
+                        change_x = -change_x;
+                        change_y = -change_y;
                     }
                 }
             }
         }
 
-        System.out.println("dx dy" + dx + "-" + dy);
-        this.setPos(x + (int)dx, y + (int)dy);
+        this.setPos(x + (int)change_x, y + (int)change_y);
     }
 
     public void becomeLeader() 
